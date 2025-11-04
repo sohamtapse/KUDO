@@ -1,6 +1,6 @@
 import User from "../../../models/user.model";
 import { NextResponse } from "next/server";
-import connect from "@/db/db"; // your mongoose connection file
+import connect from "@/db/db";
 
 export async function POST(req: Request) {
   const { email, password, username } = await req.json();

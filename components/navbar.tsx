@@ -38,7 +38,7 @@ const Navbar = () => {
             href="/sign-in"
             className="px-5 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition flex items-center gap-2"
           >
-            Sign-Up →
+            Sign-in →
           </Link>
         </div>
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import connect from "@/db/db"; // your mongoose connection file
+import connect from "@/db/db";
 import User from "../../../models/user.model";
 
 export async function POST(req: Request) {

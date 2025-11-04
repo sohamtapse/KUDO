@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState, ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   const [checking, setChecking] = useState(true);
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     axios
@@ -15,7 +17,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         router.push("/dashboard");
       })
       .catch(() => setChecking(false));
-  }, [router]);
+
+    if (status === "authenticated") {
+      router.replace("/dashboard");
+      return;
+    }
+
+    if (status === "loading") return;
+  }, [status, router]);
 
   if (checking) {
     return (

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import connect from "@/db/db";
 import Navbar from "@/components/navbar";
+import Providers from "./providers";
+
 connect();
 
 export const metadata: Metadata = {
@@ -18,7 +20,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-gray-950">
         <Navbar />
-        <main className="mt-20 ">{children}</main>
+        <Providers>
+          <main className="mt-20 ">{children}</main>
+        </Providers>
       </body>
     </html>
   );
