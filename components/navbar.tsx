@@ -1,11 +1,50 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { data: session, status } = useSession();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    // If NextAuth session exists, mark logged in
+    if (status === "authenticated" && session) {
+      setIsLoggedIn(true);
+      return;
+    }
+
+    // If NextAuth loading, don't override state yet
+    if (status === "loading") return;
+
+    // Fallback: check legacy JWT cookie via /api/me
+    fetch("/api/me")
+      .then((res) => {
+        if (res.ok) setIsLoggedIn(true);
+        else setIsLoggedIn(false);
+      })
+      .catch(() => setIsLoggedIn(false));
+  }, [session, status]);
+
+  const handleLogout = async () => {
+    try {
+      if (status === "authenticated") {
+        await signOut({ callbackUrl: "/sign-in" });
+        return;
+      }
+
+      await fetch("/api/logout");
+      router.replace("/sign-in");
+    } catch (err) {
+      console.error("Logout error:", err);
+      router.replace("/sign-in");
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-transparent">
@@ -34,12 +73,21 @@ const Navbar = () => {
 
         {/* Get in touch button */}
         <div className="hidden md:block">
-          <Link
-            href="/sign-in"
-            className="px-5 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition flex items-center gap-2"
-          >
-            Sign-in →
-          </Link>
+          {isLoggedIn ? (
+            <button
+              onClick={handleLogout}
+              className="px-5 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition flex items-center gap-2"
+            >
+              Logout →
+            </button>
+          ) : (
+            <Link
+              href="/sign-in"
+              className="px-5 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition flex items-center gap-2"
+            >
+              Sign-in →
+            </Link>
+          )}
         </div>
 
         <button
@@ -59,13 +107,25 @@ const Navbar = () => {
             <Link href="/dashboard" className="hover:opacity-80 transition">
               DashBoard
             </Link>
-            <Link
-              href="/sign-in"
-              onClick={() => setMenuOpen(false)}
-              className="inline-block mt-4 px-5 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition"
-            >
-              Sign-Up →
-            </Link>
+            {isLoggedIn ? (
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleLogout();
+                }}
+                className="inline-block mt-4 px-5 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition"
+              >
+                Logout →
+              </button>
+            ) : (
+              <Link
+                href="/sign-in"
+                onClick={() => setMenuOpen(false)}
+                className="inline-block mt-4 px-5 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition"
+              >
+                Sign-in →
+              </Link>
+            )}
           </div>
         </div>
       )}

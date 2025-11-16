@@ -19,8 +19,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-gray-950">
-        <Navbar />
         <Providers>
+          <Navbar />
           <main className="mt-20 ">{children}</main>
         </Providers>
       </body>
