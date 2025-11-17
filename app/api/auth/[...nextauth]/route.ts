@@ -3,20 +3,28 @@
 import NextAuth from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import connect from "@/db/db";
-// import User from "@/models/user.model";
 import OAuthUser from "@/models/oauthUser.model";
 
-const authOptions = {
+const handler = NextAuth({
   providers: [
     GithubProvider({
       clientId: process.env.GITHUB_ID || "",
       clientSecret: process.env.GITHUB_SECRET || "",
+      authorization: {
+        params: {
+          scope: "read:user user:email repo admin:repo_hook",
+          // required to create webhooks automatically
+        },
+      },
     }),
   ],
+
   callbacks: {
+    // 🔥 Save user to your MongoDB
     async signIn({ user, account, profile }: any) {
       try {
         await connect();
+
         await OAuthUser.findOneAndUpdate(
           { provider: account.provider, providerId: profile.id },
           {
@@ -29,17 +37,6 @@ const authOptions = {
           { upsert: true, new: true }
         );
 
-        // const existing = await User.findOne({
-        //   email: profile.email || user.email,
-        // });
-
-        // if (!existing) {
-        //   await User.create({
-        //     email: profile.email || user.email,
-        //     username: profile.login || user.name,
-        //   });
-        // }
-
         return true;
       } catch (err) {
         console.error("NextAuth signIn callback error:", err);
@@ -47,22 +44,27 @@ const authOptions = {
       }
     },
 
-    async redirect({ url, baseUrl }: { url?: string; baseUrl?: string }) {
-      try {
-        if (!url) return `${baseUrl}/dashboard`;
-
-        if (url.startsWith("/")) return `${baseUrl}${url}`;
-
-        if (url.startsWith(baseUrl || "")) return url;
-
-        return `${baseUrl}/dashboard`;
-      } catch (err) {
-        return `${baseUrl}/dashboard`;
+    // 🔥 Add access token to JWT (required for creating webhooks)
+    async jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token; // ⬅ important
       }
+      return token;
+    },
+
+    // 🔥 Make accessToken available in session.client side
+    async session({ session, token }) {
+      (session as any).accessToken = token.accessToken;
+      return session;
+    },
+
+    async redirect({ url, baseUrl }) {
+      if (!url) return `${baseUrl}/dashboard`;
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith(baseUrl)) return url;
+      return `${baseUrl}/dashboard`;
     },
   },
-};
-
-const handler = NextAuth(authOptions as any);
+});
 
 export { handler as GET, handler as POST };
