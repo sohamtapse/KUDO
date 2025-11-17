@@ -16,7 +16,7 @@ export async function POST(req: Request) {
           active: true,
           events: ["push"],
           config: {
-            url: "http://localhost:3000/api/github/webhook",
+            url: "https://kudo-hvyv.vercel.app/api/github/webhook",
             content_type: "json",
             secret: process.env.GITHUB_WEBHOOK_SECRET,
           },
